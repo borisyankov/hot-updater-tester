@@ -1,0 +1,13 @@
+name = "hot-updater-server"
+main = "src/index.ts"
+compatibility_date = "2025-01-24"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hot-updater-db"
+database_id = "648a93e9-d745-4bcc-be22-35bd0184838f"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "hot-updater-bundles"

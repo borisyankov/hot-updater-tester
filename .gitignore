@@ -41,3 +41,7 @@ app-example
 # generated native folders
 /ios
 /android
+# hot-updater
+.env.hotupdater
+.hot-updater/output
+.hot-updater/log
