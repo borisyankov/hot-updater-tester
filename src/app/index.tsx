@@ -1,61 +1,67 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { HotUpdater, useHotUpdaterStore } from '@hot-updater/react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSyncExternalStore } from 'react';
 
-import { AnimatedIcon } from '@/components/animated-icon';
 import { HintRow } from '@/components/hint-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import { hotUpdaterStatusStore } from '@/store/hot-updater-status';
+import { BottomTabInset, Spacing } from '@/constants/theme';
 
 export default function HomeScreen() {
+  const { progress, isUpdateDownloaded } = useHotUpdaterStore();
+  const { updateResult } = useSyncExternalStore(
+    hotUpdaterStatusStore.subscribe,
+    hotUpdaterStatusStore.getSnapshot,
+  );
+
+  const crashHistory = HotUpdater.getCrashHistory();
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <ThemedText type="subtitle" style={styles.heading}>
+            Hot Updater
           </ThemedText>
-        </ThemedView>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+          <ThemedText type="code" style={styles.sectionLabel}>bundle info</ThemedText>
+          <ThemedView type="backgroundElement" style={styles.card}>
+            <HintRow title="Bundle ID" hint={<ThemedText type="code">{HotUpdater.getBundleId()}</ThemedText>} />
+            <HintRow title="Min Bundle ID" hint={<ThemedText type="code">{HotUpdater.getMinBundleId()}</ThemedText>} />
+            <HintRow title="App Version" hint={<ThemedText type="code">{HotUpdater.getAppVersion() ?? 'N/A'}</ThemedText>} />
+            <HintRow title="Fingerprint" hint={<ThemedText type="code">{HotUpdater.getFingerprintHash() ?? 'N/A'}</ThemedText>} />
+          </ThemedView>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+          <ThemedText type="code" style={styles.sectionLabel}>channel</ThemedText>
+          <ThemedView type="backgroundElement" style={styles.card}>
+            <HintRow title="Channel" hint={<ThemedText type="code">{HotUpdater.getChannel()}</ThemedText>} />
+            <HintRow title="Default Channel" hint={<ThemedText type="code">{HotUpdater.getDefaultChannel()}</ThemedText>} />
+            <HintRow title="Channel Switched" hint={<ThemedText type="code">{String(HotUpdater.isChannelSwitched())}</ThemedText>} />
+          </ThemedView>
 
-        {Platform.OS === 'web' && <WebBadge />}
+          <ThemedText type="code" style={styles.sectionLabel}>update state</ThemedText>
+          <ThemedView type="backgroundElement" style={styles.card}>
+            <HintRow title="Update Downloaded" hint={<ThemedText type="code">{String(isUpdateDownloaded)}</ThemedText>} />
+            <HintRow title="Download Progress" hint={<ThemedText type="code">{Math.round(progress * 100)}%</ThemedText>} />
+            <HintRow title="Crash History" hint={<ThemedText type="code">{crashHistory.length === 0 ? 'none' : crashHistory.join(', ')}</ThemedText>} />
+          </ThemedView>
+
+          <ThemedText type="code" style={styles.sectionLabel}>last update result</ThemedText>
+          <ThemedView type="backgroundElement" style={styles.card}>
+            {updateResult === null ? (
+              <HintRow title="Status" hint={<ThemedText type="code">pending…</ThemedText>} />
+            ) : (
+              <>
+                <HintRow title="Status" hint={<ThemedText type="code">{updateResult.status}</ThemedText>} />
+                <HintRow title="Force Update" hint={<ThemedText type="code">{String(updateResult.shouldForceUpdate)}</ThemedText>} />
+                <HintRow title="Bundle ID" hint={<ThemedText type="code">{updateResult.id}</ThemedText>} />
+                <HintRow title="Message" hint={<ThemedText type="code">{updateResult.message ?? 'null'}</ThemedText>} />
+              </>
+            )}
+          </ThemedView>
+        </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
@@ -64,33 +70,25 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
   },
   safeArea: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    gap: Spacing.two,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  heading: {
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.two,
   },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
+  sectionLabel: {
     textTransform: 'uppercase',
+    paddingTop: Spacing.two,
   },
-  stepContainer: {
+  card: {
     gap: Spacing.three,
-    alignSelf: 'stretch',
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.four,
     borderRadius: Spacing.four,

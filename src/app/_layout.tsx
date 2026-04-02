@@ -9,6 +9,7 @@ import { Text, useColorScheme, View } from "react-native";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import AppTabs from "@/components/app-tabs";
+import { hotUpdaterStatusStore } from "@/store/hot-updater-status";
 
 function TabLayout() {
   const colorScheme = useColorScheme();
@@ -24,6 +25,9 @@ export default HotUpdater.wrap({
   baseURL: "https://hot-updater.borisyankov.workers.dev/api/check-update",
   updateStrategy: "appVersion",
   updateMode: "auto",
+  onUpdateProcessCompleted: (response) => {
+    hotUpdaterStatusStore.setUpdateResult(response);
+  },
   fallbackComponent: ({ progress, status }) => (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text style={{ fontSize: 18, fontWeight: "bold" }}>
