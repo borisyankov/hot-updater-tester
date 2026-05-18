@@ -1,22 +1,20 @@
-import { d1Database, r2Storage } from "@hot-updater/cloudflare";
+import { r2Storage } from "@hot-updater/cloudflare";
 import { expo } from "@hot-updater/expo";
+import { standaloneRepository } from "@hot-updater/standalone";
 import { config } from "dotenv";
 import { defineConfig } from "hot-updater";
 
 config({ path: ".env.hotupdater" });
 
-
 export default defineConfig({
   build: expo(),
   storage: r2Storage({
-    bucketName: process.env.HOT_UPDATER_CLOUDFLARE_R2_BUCKET_NAME!,
-    accountId: process.env.HOT_UPDATER_CLOUDFLARE_ACCOUNT_ID!,
-    cloudflareApiToken: process.env.HOT_UPDATER_CLOUDFLARE_API_TOKEN!,
+    bucketName: process.env.OTA_CLOUDFLARE_R2_BUCKET_NAME!,
+    accountId: process.env.OTA_CLOUDFLARE_ACCOUNT_ID!,
+    cloudflareApiToken: process.env.OTA_CLOUDFLARE_API_TOKEN!,
   }),
-  database: d1Database({
-    databaseId: process.env.HOT_UPDATER_CLOUDFLARE_D1_DATABASE_ID!,
-    accountId: process.env.HOT_UPDATER_CLOUDFLARE_ACCOUNT_ID!,
-    cloudflareApiToken: process.env.HOT_UPDATER_CLOUDFLARE_API_TOKEN!,
+  database: standaloneRepository({
+    baseUrl: "http:/localhost:5173/apps/hot-updater-tester/hot-updater",
   }),
-  updateStrategy: "appVersion", // or "fingerprint"
+  updateStrategy: "appVersion",
 });
